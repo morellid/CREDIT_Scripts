@@ -12,6 +12,12 @@ geth needs to be running wiht the --rpc option
 
 install nvm (see the web)
 
+install v4
+``nvm install v4''
+
+use v4
+``nvm use v4''
+
 install web3 using npm
 ``npm install web3''
 
