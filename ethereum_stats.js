@@ -8,10 +8,15 @@ var db = {
 };
 var miners = db.miners;
 var days = db.days;
-var maxBlock = web3.eth.blockNumber;
-for(var i=1; i<1000; i++)
+//var maxBlock = web3.eth.blockNumber;
+var maxBlock = 10000;
+// if you want to skip every other block (to analyse faster, only looking at a portion of the blocks) use a value larger than 1
+// e.g. skip=2 will look only at odd blocks
+// DO NOT SET skip=0 or this script will never end, crashing the machine (it will use all the memory)
+var skip = 1;
+for(var i=1; i<maxBlock; i++)
 {
-    var b = web3.eth.getBlock(i);
+    var b = web3.eth.getBlock(i * skip);
     var miner = b.miner;
     if (miners.indexOf(miner) < 0) {
 	miners.push(miner);
