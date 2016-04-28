@@ -38,7 +38,8 @@ var maxBlock = first + 1023;
 // e.g. skip=2 will look only at odd blocks
 // DO NOT SET skip=0 or this script will never end, crashing the machine (it will use all the memory)
 var skip = 1;
-console.log("will now cruch blocks from " + first + " to " + maxBlock);
+console.log("will now crunch blocks from " + first + " to " + maxBlock);
+var startTime = new Date();
 for(var i=first; i<maxBlock; i++)
 {
     if (i > lastBlockInChain) {
@@ -48,7 +49,7 @@ for(var i=first; i<maxBlock; i++)
 	process.exit(1);
     } else 
     {
-	var startTime = new Date();
+
 	//console.log("getting bock");
 	var b = web3.eth.getBlock(i * skip);
 	if (b == null) {
@@ -85,14 +86,22 @@ for(var i=first; i<maxBlock; i++)
 	    }
 	    //console.log("incrementing mined blocks of this miner");
 	    daydata.miners[minerId] = daydata.miners[minerId]+1;
-	    var elapsed = new Date() - startTime;
-	    console.log("block " + i + " in " + elapsed + "ms, using " + process.memoryUsage().rss + " rss, "  + process.memoryUsage().heapUsed + " Bytes of " + process.memoryUsage().heapTotal);
+	    if (i % 10 == 0) {
+		var elapsed = new Date() - startTime;
+		var averageTime = elapsed/(i-first);
+		var missing = lastBlockInChain - i;
+		var ETA = new Date( new Date().getTime() + averageTime * missing);
+		console.log("block " + i + " of " + lastBlockInChain + " ETA " + ETA + ", using " + process.memoryUsage().rss + " rss, "  + process.memoryUsage().heapUsed + " Bytes of " + process.memoryUsage().heapTotal);
+	    }
+
 	}
 	db.lastBlock=i;
     }
 }
 
-console.log(db);
+//console.log(db);
+console.log("finished batch, total miners: " + miners.length);
+//console.log(days);
 
 fs.writeFileSync("./" + dbFileName, JSON.stringify(db, null, 2) ,"utf-8")
 // TODO return continuation token

@@ -6,6 +6,12 @@ This repo contains the scripts used to analyse the Bitcoin and the Ethereum bloc
 
 TODO
 
+to connect to the blockchain explorer run this command on your laptop:
+ssh YOURUSER@credit.northeurope.cloudapp.azure.com -L 8889:localhost:3001 -N &
+(obviously changing YOURUSER to your actual user)
+then point your browser to
+http://localhost:8889/insight
+
 == Ethereum
 
 geth needs to be running wiht the --rpc option
