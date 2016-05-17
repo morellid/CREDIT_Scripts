@@ -114,7 +114,7 @@ daily.cross.entropy <- sapply(1:nrow(all.miners.data), function(row){
 }) / norm.factor
 
 plot(daily.cross.entropy, main = "Bitcoin daily cross entropy", 
-     xlab="days since first block", ylab = "cross entropy", type="l")
+     xlab="days since first block", ylab = "Shannon entropy", type="l")
 dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
 dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
 
@@ -172,10 +172,9 @@ dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
 <<fig=T,echo=F,height=7,width=10>>=
 load(file="ethereum.daily.cross.entropy.Rdata")
 plot(daily.cross.entropy, main = "Ethereum daily cross entropy", 
-     xlab="days since first block", ylab = "cross entropy", type="l")
+     xlab="days since first block", ylab = "Shannon entropy", type="l")
 dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
 dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
-
 @
 
 
