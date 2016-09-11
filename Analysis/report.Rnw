@@ -1,0 +1,181 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\title{Short analyisis of the bitcoin and ethereum mining pools power}
+\author{Davide Morelli}
+\maketitle
+
+
+\section{How data is gathered}
+
+<<echo=F>>=
+library(rjson)
+bitcoin.stats <- rjson::fromJSON(file="../bitcoin_stats.json")
+ethereum.stats <- rjson::fromJSON(file="../ethereum_stats.json")
+
+all.miners.data <- read.csv("bitcoin.miners.data.csv")
+db <- bitcoin.stats
+d0 <- as.POSIXlt("2009-01-03")
+d0.index <- db$days[[1]]$day
+is.first.day.of.year <- function(d) {
+  d$yday == 0  
+}
+is.first.day.of.month <- function(d) {
+  d$mday == 1  
+}
+one.day <- 3600*24
+to.day <- function(i){as.POSIXlt(d0+one.day*i)}
+years.indexes <- which(sapply(db$days, function(d){ is.first.day.of.year(to.day(d$day-d0.index)) }))
+months.indexes <- which(sapply(db$days, function(d){ is.first.day.of.month(to.day(d$day-d0.index)) }))
+@
+
+In this short report we show the evolution of the mining power of the main mining pools for the bitcoin and for the ethereum blockchains.
+
+To collecte the data we installed a bitcoin full node, and an ethereum full node, and synched the blockchains. We then wrote two scripts that iteratively query the blockchains, block by block, bompiling daily statistics of the blockchains. In particular we created a small database with the number of blocks mined by every mining pool, day by day.
+
+We then plotted the evolution of the number of blocks mined by each mining pool, and the evolution of its Shannon entropy.
+
+There are differences in the statistics:
+\begin{itemize}
+\item the tool we used to explore the ethereum blockchain does not give us mining pool names, we aggregated using wallet addresses as keys. We found \Sexpr{length(ethereum.stats$miners)} addresses.
+\item the tool we used to explore the bitcoin blockchain ony reports the main mining pool, aggregating every other wallet address as ``N.A.''.
+\item because of the previous point, when calculating the blockchain daily entropy, we assumed that all the blocks mined by ``N.A.'' were mined by different miners. This most likely led to an over-estimation of the true entropy.
+\end{itemize}
+
+\section{Bitcoin}
+
+
+\subsection{Number of blocks mined by mining pools}
+
+In this section we show the number of blocks mined, day by day, by the main mining pools.
+The continuous vertical lines are years, the dotted vertical lines are months.
+
+The date of the first block in the blockchain is January, the 3rd, 2009.
+
+<<fig=T,width=10,height=7,echo=F>>=
+
+miners.cols <- sapply(1:length(db$miners), function(i){rgb(runif(1,0,1), runif(1,0,1), runif(1,0,1))})
+plot(all.miners.data[,1], type="l", main = "Bitcoin daily mined blocks (only mining pools)",
+     xlab = "days since first block", 
+     ylab = "blocks", col=miners.cols[1])
+dev.null <- sapply(2:ncol(all.miners.data), function(i){
+  points(all.miners.data[,i], type="l", col=miners.cols[i])
+})
+dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
+dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
+
+#legend("topleft", db$miners, col=miners.cols, horiz = T,lty=1)
+legend("topleft", db$miners, col=miners.cols,lty=1)
+
+@
+
+
+The same graph in logarithmic scale:
+
+<<fig=T,width=10,height=7,echo=F>>=
+plot(all.miners.data[,1], type="l", main = "Bitcoin daily mined blocks (only mining pools), logarithmic scale",
+     xlab = "days since first block", ylab = "blocks", col=miners.cols[1], log="y")
+dev.null <- sapply(2:ncol(all.miners.data), function(i){
+  points(all.miners.data[,i], type="l", col=miners.cols[i])
+})
+dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
+dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
+
+#legend("topleft", db$miners, col=miners.cols, horiz = T,lty=1)
+legend("topleft", db$miners, col=miners.cols,lty=1)
+
+@
+
+
+\subsection{Shannon entropy}
+
+In this section we show the daily Shannon entropy of the number of blocks mined blocks, by mining pool. Shannon entropy measures the complexity of a signal. In this context it measures how \emph{distributed} is the mining power. An entropy of 0 indicates that all the mining power is concentrated in a single mining pool. An entropy of 1 indicates that the mining power is equally spread accross all the partecipants in the blockchain.
+
+<<fig=T,width=10,height=7,echo=F>>=
+norm.factor <- log2(ncol(all.miners.data) + max(all.miners.data[,1]))
+daily.cross.entropy <- sapply(1:nrow(all.miners.data), function(row){
+  daily.sum <- sum(all.miners.data[row,])
+  tmp.entropy <- sapply(2:ncol(all.miners.data), function(col) {
+    p <- all.miners.data[row,col]/daily.sum
+    if (p==0)
+      0.0
+    else
+      - p * log2(p)
+  })
+  # col 1 is special (N.A.)
+  how.many.na =  all.miners.data[row,1]/daily.sum
+  prob.each.na = 1.0/daily.sum * log2(1.0/daily.sum)
+  first = how.many.na * prob.each.na
+  if (first < 0)
+    first <- 0
+  sum(tmp.entropy) + first
+}) / norm.factor
+
+plot(daily.cross.entropy, main = "Bitcoin daily cross entropy", 
+     xlab="days since first block", ylab = "Shannon entropy", type="l")
+dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
+dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
+
+@
+
+
+\section{Ethereum}
+
+<<echo=F>>=
+db <- ethereum.stats
+all.miners.data <- read.csv("ethereum.miners.data.csv")
+miner.blocks.total <- sapply(1:ncol(all.miners.data), function(col){sum(all.miners.data[,col])})
+threshold = sort(miner.blocks.total)[length(miner.blocks.total)-20]
+frequent.miners = which(miner.blocks.total >= threshold)
+generic.miner <- sapply(1:nrow(all.miners.data), function(row){sum(all.miners.data[row,-frequent.miners])})
+
+d0 <- as.POSIXlt("2009-07-30")
+d0.index <- db$days[[1]]$day
+is.first.day.of.year <- function(d) {
+  d$yday == 0  
+}
+is.first.day.of.month <- function(d) {
+  d$mday == 1  
+}
+one.day <- 3600*24
+to.day <- function(i){as.POSIXlt(d0+one.day*i)}
+years.indexes <- which(sapply(db$days, function(d){ is.first.day.of.year(to.day(d$day-d0.index)) }))
+months.indexes <- which(sapply(db$days, function(d){ is.first.day.of.month(to.day(d$day-d0.index)) }))
+
+@
+
+We have several thousands of different wallet addresses. To be able to produce graphs, we plotted the 20 most active pools (with the most mined coins), and aggregated all the other blocks in a ``N.A.'' group. 
+
+The first block of the ethereum blockchain has been mined on July the 30th, 2016.
+
+\subsection{Number of blocks mined by mining pools}
+
+<<fig=T,width=10,height=7,echo=F>>=
+miners.cols <- sapply(1:length(frequent.miners), function(i){rgb(runif(1,0,1), runif(1,0,1), runif(1,0,1))})
+plot(generic.miner, type="l", main = "Ethereum daily mined blocks (only 20 most active miners)", 
+     xlab = "days since first block", ylab = "blocks",
+     col="black", ylim = c(0,max(max(generic.miner), max(all.miners.data) )))
+dev.null <- sapply(1:length(frequent.miners), function(i){
+  points(all.miners.data[,frequent.miners[i]], type="l", col=miners.cols[i])
+})
+
+dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
+dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
+
+@
+
+
+\subsection{Shannon entropy}
+
+<<fig=T,echo=F,height=7,width=10>>=
+load(file="ethereum.daily.cross.entropy.Rdata")
+plot(daily.cross.entropy, main = "Ethereum daily cross entropy", 
+     xlab="days since first block", ylab = "Shannon entropy", type="l")
+dev.null <- sapply(years.indexes, function(y){ abline(v=y, lty=1)  })
+dev.null <- sapply(months.indexes, function(m){ abline(v=m, lty=2)  })
+@
+
+
+\end{document}
