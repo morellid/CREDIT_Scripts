@@ -92,7 +92,7 @@ var analyseBlock = function()
                 return;
             }
             for(var i=0; i<txs.length; i++){
-                console.log(txs[i]);
+                //console.log(txs[i]);
                 var tx = web3.eth.getTransactionReceipt(txs[i]);
                 var contr = tx.contractAddress;
                 if (contr)
