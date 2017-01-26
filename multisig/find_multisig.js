@@ -142,6 +142,37 @@ var fetch1000blocks = function()
     analyseBlock();
 }
 
+var fs = require("fs")
+var datafile = './multisig_data.json';
+var saveStatus = function()
+{
+    // things to save:
+    // bl_hash
+    // matching_contracts;
+    // contracts;
+    var obj = {
+    };
+    obj["last_hash"] = bl_hash;
+    obj["matching_contracts"] = matching_contracts;
+    obj["contracts"] = contracts;
+    fs.writeFile(datafile, JSON.stringify(obj) , 'utf-8');
+    console.log("wrote " + datafile);
+    console.log("last hash is " + bl_hash);
+    console.log("with  " + matching_contracts.length + " matching contracts");
+    console.log("and  " + contracts.length + " contracts");
+}
+
+var loadStatus = function()
+{
+    var obj = JSON.parse(fs.readFileSync(datafile, 'utf8'));
+    bl_hash = obj["last_hash"];
+    matching_contracts = obj["matching_contracts"];
+    contracts = obj["contracts"];
+    console.log("read " + datafile);
+    console.log("last hash is " + bl_hash);
+    console.log("with  " + matching_contracts.length + " matching contracts");
+    console.log("and  " + contracts.length + " contracts");
+}
 // var contract_code = web3.eth.getCode("0xc57ed4893c79189f6bcfd181cf42d842fdb3e5a8");
 // var sign = web3.sha3("greeter()").substring(2, 8+2);
 
