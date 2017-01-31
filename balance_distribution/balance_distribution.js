@@ -30,19 +30,26 @@ var resetResults = function()
 
 var addAddress = function(address)
 {
-    if (!(address) in addresses)
+    // console.log("evaluating address " + address);
+    if (!(address in addresses))
     {
-        var balance = web3.eth.getBalance(address);
-        address[address] = balance;
+        // console.log("address was not present");
+        var balance = web3.eth.getBalance(address).toString(10);
+        addresses[address] = balance;
+        console.log("address " + address + " has " + balance);
     }
+    //  else 
+    // {
+    //     console.log("address was already present");
+    // }
 }
 
 var analyseBlock = function()
 {
 
     blocksDone++;
-    //console.log("level " + blocksDone + " processing block " + bl_hash);  
-    web3.eth.getBlock(bl_hash, function(error, bl)
+    // console.log("level " + blocksDone + " processing block " + bl_hash);  
+    web3.eth.getBlock(bl_hash, true, function(error, bl)
     {
         if (error)
         {
@@ -69,9 +76,10 @@ var analyseBlock = function()
                 printResult();
                 return;
             }
+            console.log("block "+bl_hash+" has " + txs.length + " transactions");
             for(var i=0; i<txs.length; i++){
                 //console.log(txs[i]);
-                var tx = web3.eth.getTransactionReceipt(txs[i]);
+                var tx = txs[i];
                 addAddress(tx.from);
                 if (tx.to != null)
                     addAddress(tx.to);
@@ -148,3 +156,8 @@ var loadStatus = function()
 // keepSearching = true;
 // analyseBlock();
 
+// maxBlocksDone = 3;
+// keepSearching = true;
+// analyseBlock();
+
+fetchAllAddresses();
