@@ -23,7 +23,7 @@ var signatures = ["removeOwner(address)", "isOwner(address)", "m_numOwners()", "
 
 var bl_hash = "latest";
 var blocksDone = 0;
-var maxBlocksDone = 10000;
+var maxBlocksDone = 10000000;
 var keepSearching = true;
 
 var matching_contracts = [];
@@ -46,7 +46,7 @@ var printResult = function()
     console.log("analysed " + blocksDone + " blocks");
     console.log("found " + contracts.length + " contracts");
     console.log("found " + matching_contracts.length + " matching contracts");
-    console.log(matching_contracts);
+    //console.log(matching_contracts);
 }
 
 var resetResults = function()
@@ -176,4 +176,9 @@ var loadStatus = function()
 // var contract_code = web3.eth.getCode("0xc57ed4893c79189f6bcfd181cf42d842fdb3e5a8");
 // var sign = web3.sha3("greeter()").substring(2, 8+2);
 
+// keepSearching = false;
+// printResult();
+// saveStatus();
+// keepSearching = true;
+// analyseBlock();
 
