@@ -135,7 +135,7 @@ var saveStatus = function()
     fs.writeFile(datafile, JSON.stringify(obj) , 'utf-8');
     console.log("wrote " + datafile);
     console.log("last hash is " + bl_hash);
-    console.log("with  " + addresses.length + " addresses");
+    console.log("with  " + Object.keys(addresses).length + " addresses");
 }
 
 var loadStatus = function()
@@ -145,7 +145,7 @@ var loadStatus = function()
     addresses = obj["addresses"];
     console.log("read " + datafile);
     console.log("last hash is " + bl_hash);
-    console.log("with  " + addresses.length + " addresses");
+    console.log("with  " + Object.keys(addresses).length + " addresses");
 }
 // var contract_code = web3.eth.getCode("0xc57ed4893c79189f6bcfd181cf42d842fdb3e5a8");
 // var sign = web3.sha3("greeter()").substring(2, 8+2);
