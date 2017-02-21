@@ -19,3 +19,10 @@ length(balances)
 
 max(balances/1.0e18)
 
+multisig.data <- fromJSON(file="multisig_data.json")
+
+balance.addresses <- names(balances.data$addresses)
+balance.is.multisig <- sapply(balance.addresses, function(i) {i %in% multisig.data$matching_contracts})
+summary(balance.is.multisig)
+length(multisig.data$matching_contracts)
+length(multisig.data$contracts)
