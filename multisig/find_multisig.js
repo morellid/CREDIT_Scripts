@@ -10,7 +10,11 @@ unix time: 1466148600
 1 week before soft fork: 1465543800
 1 week after soft fork: 1466753400
 
+block about 10 days after fork:
+0x35f59c4c569b9973450e8d738f9e8027139c235169114690951dc2e8a159894d
 
+block 20 days after fork:
+0x7adefa4234c0a39fca0fe168de8a0c66d50614619f8650a8ad1380feaa030ab6
 
 /*
 var contr_code = web3.eth.getCode("0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe");
@@ -27,7 +31,7 @@ analyseContract("0xbF35fAA9C265bAf50C9CFF8c389C363B05753275")
 // https://etherscan.io/address/0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae#code
 var signatures = ["removeOwner(address)", "isOwner(address)", "m_numOwners()", "addOwner(address)", "kill(address)", "changeRequirement(uint256)"];
 
-var bl_hash = "0x35f59c4c569b9973450e8d738f9e8027139c235169114690951dc2e8a159894d";
+var bl_hash = "0x7adefa4234c0a39fca0fe168de8a0c66d50614619f8650a8ad1380feaa030ab6";
 var blocksDone = 0;
 var maxBlocksDone = 1000000000;
 var keepSearching = true;
@@ -35,11 +39,12 @@ var keepSearching = true;
 var softForkTimestamp = 1466148600;
 
 var days = [];
+var ndays = 7;
 
-var minimumTimestamp = softForkTimestamp-7*24*60*60;
-var maximumTimestamp = softForkTimestamp+7*24*60*60;
+var minimumTimestamp = softForkTimestamp-ndays*24*60*60;
+var maximumTimestamp = softForkTimestamp+ndays*24*60*60;
 
-for (var i = 0; i < 14; i++) {
+for (var i = 0; i < ndays*2; i++) {
     days.push({
         day: minimumTimestamp+i*60*60*24,
         'matching_contracts': [],
