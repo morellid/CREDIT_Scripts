@@ -4,7 +4,17 @@ var Web3 = require("web3");
 var fs = require("fs");
 var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
+/* 
+the DAO attack was known at June 17th 7:30, soft fork update released at the same time
+unix time: 1466148600
+1 week before soft fork: 1465543800
+1 week after soft fork: 1466753400
 
+block about 10 days after fork:
+0x35f59c4c569b9973450e8d738f9e8027139c235169114690951dc2e8a159894d
+
+block 20 days after fork:
+0x7adefa4234c0a39fca0fe168de8a0c66d50614619f8650a8ad1380feaa030ab6
 
 /*
 var contr_code = web3.eth.getCode("0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe");
@@ -21,13 +31,30 @@ analyseContract("0xbF35fAA9C265bAf50C9CFF8c389C363B05753275")
 // https://etherscan.io/address/0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae#code
 var signatures = ["removeOwner(address)", "isOwner(address)", "m_numOwners()", "addOwner(address)", "kill(address)", "changeRequirement(uint256)"];
 
-var bl_hash = "latest";
+var bl_hash = "0x7adefa4234c0a39fca0fe168de8a0c66d50614619f8650a8ad1380feaa030ab6";
 var blocksDone = 0;
-var maxBlocksDone = 10000000;
+var maxBlocksDone = 1000000000;
 var keepSearching = true;
 
-var matching_contracts = [];
-var contracts = [];
+var softForkTimestamp = 1466148600;
+
+var days = [];
+var ndays = 7;
+
+var minimumTimestamp = softForkTimestamp-ndays*24*60*60;
+var maximumTimestamp = softForkTimestamp+ndays*24*60*60;
+
+for (var i = 0; i < ndays*2; i++) {
+    days.push({
+        day: minimumTimestamp+i*60*60*24,
+        'matching_contracts': [],
+        'contracts':[]        
+    });
+};
+
+var whichDay = function(d) {
+    return Math.floor((d - minimumTimestamp)/(60*60*24));
+}
 
 var analyseContract = function(contract_addr)
 {
@@ -44,8 +71,15 @@ var analyseContract = function(contract_addr)
 var printResult = function()
 {
     console.log("analysed " + blocksDone + " blocks");
-    console.log("found " + contracts.length + " contracts");
-    console.log("found " + matching_contracts.length + " matching contracts");
+    console.log("processed " + days.length + " days");
+    var totMatch = 0;
+    var tot = 0;
+    for (var i = 0; i < days.length; i++) {
+        totMatch+=days[i].matching_contracts.length;
+        tot+=days[i].contracts.length;
+    };
+    console.log("found " + tot + " contracts");
+    console.log("found " + totMatch + " matching contracts");
     //console.log(matching_contracts);
 }
 
@@ -55,8 +89,6 @@ var resetResults = function()
     blocksDone = 0;
     maxBlocksDone = 10000;
     keepSearching = true;
-    matching_contracts = [];
-    contracts = [];
 }
 
 var analyseBlock = function()
@@ -91,19 +123,29 @@ var analyseBlock = function()
                 printResult();
                 return;
             }
-            for(var i=0; i<txs.length; i++){
-                //console.log(txs[i]);
-                var tx = web3.eth.getTransactionReceipt(txs[i]);
-                var contr = tx.contractAddress;
-                if (contr)
-                {
-                    console.log("found contract at " + contr);  
-                    if (analyseContract(contr))
+            if (bl.timestamp < minimumTimestamp)
+            {
+                console.log("reached minimumTimestamp");
+                printResult();
+                return;                
+            }
+            if (bl.timestamp < maximumTimestamp)
+            {
+                day = days[whichDay(bl.timestamp)];
+                for(var i=0; i<txs.length; i++){
+                    //console.log(txs[i]);
+                    var tx = web3.eth.getTransactionReceipt(txs[i]);
+                    var contr = tx.contractAddress;
+                    if (contr)
                     {
-                        console.log("found an instance at " + contr);                   
-                        matching_contracts.push(contr); 
+                        console.log("found contract at " + contr);  
+                        if (analyseContract(contr))
+                        {
+                            console.log("found an instance at " + contr);                   
+                            day.matching_contracts.push(contr); 
+                        }
+                        day.contracts.push(contr);  
                     }
-                    contracts.push(contr);  
                 }
             }
             if (blocksDone < maxBlocksDone)
@@ -143,7 +185,7 @@ var fetch1000blocks = function()
 }
 
 var fs = require("fs")
-var datafile = './multisig_data.json';
+var datafile = './multisig_data_overtime.json';
 var saveStatus = function()
 {
     // things to save:
@@ -153,25 +195,22 @@ var saveStatus = function()
     var obj = {
     };
     obj["last_hash"] = bl_hash;
-    obj["matching_contracts"] = matching_contracts;
-    obj["contracts"] = contracts;
+    obj["days"] = days;
     fs.writeFile(datafile, JSON.stringify(obj) , 'utf-8');
     console.log("wrote " + datafile);
     console.log("last hash is " + bl_hash);
-    console.log("with  " + matching_contracts.length + " matching contracts");
-    console.log("and  " + contracts.length + " contracts");
+    console.log("with  " + days.length + " days");
 }
 
 var loadStatus = function()
 {
     var obj = JSON.parse(fs.readFileSync(datafile, 'utf8'));
     bl_hash = obj["last_hash"];
-    matching_contracts = obj["matching_contracts"];
+    days = obj["days"];
     contracts = obj["contracts"];
     console.log("read " + datafile);
     console.log("last hash is " + bl_hash);
-    console.log("with  " + matching_contracts.length + " matching contracts");
-    console.log("and  " + contracts.length + " contracts");
+    console.log("with  " + days.length + " days");
 }
 // var contract_code = web3.eth.getCode("0xc57ed4893c79189f6bcfd181cf42d842fdb3e5a8");
 // var sign = web3.sha3("greeter()").substring(2, 8+2);
